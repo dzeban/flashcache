@@ -1005,14 +1005,17 @@ static int cache_ctr(struct dm_target *ti, unsigned int argc, char **argv)
 		goto bad2;
 	}
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,27)
+
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,27)) || (LINUX_VERSION_CODE > KERNEL_VERSION(3,0,0)) || (defined(RHEL_RELEASE_CODE) && (RHEL_RELEASE_CODE >= 1538))
+	dmc->io_client = dm_io_client_create();
+#else //if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,27)
 	dmc->io_client = dm_io_client_create(FLASHCACHE_COPY_PAGES);
+#endif
 	if (IS_ERR(dmc->io_client)) {
 		r = PTR_ERR(dmc->io_client);
 		ti->error = "Failed to create io client\n";
 		goto bad2;
 	}
-#endif
 
 	r = kcached_init(dmc);
 	if (r) {
